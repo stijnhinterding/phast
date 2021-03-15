@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>296</width>
-    <height>269</height>
+    <height>337</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>230</y>
+     <x>180</x>
+     <y>290</y>
      <width>91</width>
      <height>30</height>
     </rect>
@@ -311,6 +311,79 @@
    </property>
    <property name="singleStep">
     <double>1.000000000000000</double>
+   </property>
+   <property name="numButtons">
+    <number>0</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lbl_n_emitters">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>230</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string># Emitters</string>
+   </property>
+  </widget>
+  <widget class="QwtCounter" name="cnt_n_emitters">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>230</y>
+     <width>91</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="minimum">
+    <double>1.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>9000.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>1.000000000000000</double>
+   </property>
+   <property name="numButtons">
+    <number>0</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lbl_sim_speed_factor">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>260</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Simulation speed factor</string>
+   </property>
+  </widget>
+  <widget class="QwtCounter" name="cnt_sim_speedup">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>260</y>
+     <width>91</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="value">
+    <double>1.000000000000000</double>
+   </property>
+   <property name="minimum">
+    <double>0.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>9999999999999999665649998943273759183241515094863428494587753284228752052274941196820382078490267674695111155514343424.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>0.000000000000000</double>
    </property>
    <property name="numButtons">
     <number>0</number>

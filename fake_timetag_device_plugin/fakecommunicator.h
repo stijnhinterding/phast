@@ -41,12 +41,14 @@ private:
 
     bool is_running;
 
+    double sim_speedup_factor;
     std::mutex m;
 
     std::map<chan_id,timestamp> first_times;
     std::map<chan_id,timestamp> last_times;
     std::map<chan_id,uint64_t> n_events;
 
+    int64_t n_emitters;
 private:
     void gen_pulses(std::vector<int64_t> *timestamps,
                     std::vector<uint8_t> *channel_IDs, int64_t duration);
@@ -62,7 +64,23 @@ public:
                      double detection_probability,
                      uint64_t sync_divider=128,
                      int64_t chan1_induced_delay=0,
-                     int64_t chan2_induced_delay=0);
+                     int64_t chan2_induced_delay=0,
+                     int64_t n_emitters=1,
+                     double sim_speedup_factor=1);
+
+    void SetSimSpeedupFactor(double value)
+    {
+        std::lock_guard<std::mutex> l(this->m);
+        if (value <= 0.001)
+            value = 0.001;
+
+        this->sim_speedup_factor = value;
+    }
+
+    double GetSimSpeedupFactor() const
+    {
+        return this->sim_speedup_factor;
+    }
 
     void SetDecayRate(double value)
     {
@@ -70,11 +88,25 @@ public:
         this->decayrate_inv_seconds = value;
     }
 
+    int64_t GetNumEmitters() const
+    {
+        return this->n_emitters;
+    }
+
     double GetDecayRate() const
     {
         return this->decayrate_inv_seconds;
     }
 
+    void SetNumEmitters(int64_t value)
+    {
+        std::lock_guard<std::mutex> l(this->m);
+
+        if (value == 0)
+            value = 1;
+
+        this->n_emitters = value;
+    }
     void SetPulsePeriod(double value)
     {
         std::lock_guard<std::mutex> l(this->m);

@@ -14,7 +14,9 @@ correlation_calc::correlation_calc(const std::vector<chan_id>& chans_to_correlat
                                    double bin_high,
                                    bool display_only_initial_data,
                                    double time_unit,
-                                   bool correlate_FCS) :
+                                   bool correlate_FCS,
+                                   int64_t max_num_bins,
+                                   int64_t num_lin_FCS_bins) :
     Base_ui_calc(chans_to_correlate, bin_width, our_ref, display_only_initial_data, time_unit),
     leftchannel(chans_to_correlate.at(0)),
     rightchannel(chans_to_correlate.at(1)),
@@ -24,15 +26,46 @@ correlation_calc::correlation_calc(const std::vector<chan_id>& chans_to_correlat
     bin_high(bin_high),
     n_photons_left(0),
     n_photons_right(0),
-    correlate_FCS(correlate_FCS)
+    correlate_FCS(correlate_FCS),
+    max_num_bins(max_num_bins),
+    lin_FCS(false),
+    num_lin_FCS_bins(num_lin_FCS_bins)
 {
     if (!correlate_FCS) {
+        // Check if our length is feasible at all
         int64_t len = linspace_len(static_cast<timestamp>(this->bin_low),
                                    static_cast<timestamp>(this->bin_high), 1, 1, 1);
-        this->xs.resize(len, 0);
-        this->ys.resize(len - 1, 0);
 
-        linspace(this->bin_low, this->bin_high, 1, 1, 1, this->xs.data(), this->xs.size());
+        // The length may be so large, that it overflows an int64_t...
+        uint64_t temp_len = (uint64_t)(this->bin_high - this->bin_low);
+
+        if (len > this->max_num_bins || temp_len > (INT64_MAX-1)) {
+            this->bin_width = 1;
+            // For now: switch to "FCS-style" correlation,
+            // but using linear bins
+            this->correlate_FCS = true;
+            this->lin_FCS = true;
+            // check the length
+            double tot_width = this->bin_high - this->bin_low;
+            double est_bin_width = tot_width / this->num_lin_FCS_bins;
+            int64_t est_bin_width_ = (int64_t)est_bin_width;
+            int64_t new_num_bins = linspace_len(static_cast<timestamp>(this->bin_low),
+                                                static_cast<timestamp>(this->bin_high),
+                                                est_bin_width_, 1, 1);
+
+            this->xs.resize(new_num_bins,0);
+            this->ys.resize(new_num_bins-1,0);
+
+            linspace(this->bin_low, this->bin_high, est_bin_width_, 1, 1, this->xs.data(), this->xs.size());
+
+            this->ClearData();
+        } else {
+
+            this->xs.resize(len, 0);
+            this->ys.resize(len - 1, 0);
+
+            linspace(this->bin_low, this->bin_high, 1, 1, 1, this->xs.data(), this->xs.size());
+        }
     } else {
         this->xs.resize(this->bin_width, 0);
         this->ys.resize(this->bin_width - 1, 0);
@@ -259,7 +292,7 @@ DataView::data_update correlation_calc::arrange_update(DetectionUpdate event, bo
     std::vector<int64_t> rebinned_xs(rebin_bin_edges_len(this->xs.size(), this->bin_width), 0);
     std::vector<int64_t> rebinned_ys(rebin_len(this->ys.size(), this->bin_width), 0);
 
-    if (this->bin_width > 1 && !this->correlate_FCS) {
+    if (this->bin_width > 1 && (!this->correlate_FCS || this->lin_FCS)) {
         rebin(this->ys.data(),
               this->ys.size(),
               this->bin_width,

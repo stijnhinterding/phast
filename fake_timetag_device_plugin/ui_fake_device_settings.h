@@ -26,6 +26,8 @@ public:
         uint64_t sync_divider;
         int64_t chan1_delay;
         int64_t chan2_delay;
+        int64_t n_emitters;
+        double sim_speedup_factor;
     };
 
     fake_device_settings settings;
@@ -50,6 +52,10 @@ private slots:
     void on_cnt_chan1_delay_valueChanged(double value);
 
     void on_cnt_chan2_delay_valueChanged(double value);
+
+    void on_cnt_n_emitters_valueChanged(double value);
+
+    void on_cnt_sim_speedup_valueChanged(double value);
 
 private:
     Ui::ui_fake_device_settings *ui;
