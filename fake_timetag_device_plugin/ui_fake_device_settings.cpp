@@ -22,7 +22,8 @@ ui_fake_device_settings::ui_fake_device_settings(QWidget *parent, fake_device_se
     this->ui->cnt_pulse_period->setValue(this->settings.pulse_period);
     this->ui->cnt_det_prob->setValue(this->settings.detection_probability);
     this->ui->cnt_sync_divider->setValue(this->settings.sync_divider);
-
+    this->ui->cnt_n_emitters->setValue(this->settings.n_emitters);
+    this->ui->cnt_sim_speedup->setValue(this->settings.sim_speedup_factor);
     if (!can_change_timeunit) {
         this->ui->cnt_time_unit->setEnabled(false);
     }
@@ -71,4 +72,14 @@ void ui_fake_device_settings::on_cnt_chan1_delay_valueChanged(double value)
 void ui_fake_device_settings::on_cnt_chan2_delay_valueChanged(double value)
 {
     this->settings.chan2_delay = (int64_t)value;
+}
+
+void ui_fake_device_settings::on_cnt_n_emitters_valueChanged(double value)
+{
+    this->settings.n_emitters = (int64_t)value;
+}
+
+void ui_fake_device_settings::on_cnt_sim_speedup_valueChanged(double value)
+{
+    this->settings.sim_speedup_factor = value;
 }

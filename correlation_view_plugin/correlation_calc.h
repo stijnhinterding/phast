@@ -27,6 +27,11 @@ private:
 
     bool correlate_FCS;
 
+    int64_t max_num_bins;
+
+    bool lin_FCS;
+    int64_t num_lin_FCS_bins;
+
     void update_tmin(DetectionUpdate event);
     void update_tmax(DetectionUpdate event);
 
@@ -43,7 +48,7 @@ public:
                    uint64_t bin_width,
                    opaque_ptr our_ref,
                    double bin_low,
-                   double bin_high, bool display_only_initial_data, double time_unit, bool correlate_FCS);
+                   double bin_high, bool display_only_initial_data, double time_unit, bool correlate_FCS, int64_t max_num_bins=50000000, int64_t num_lin_FCS_bins=1000);
 
     virtual void ClearData();
 };

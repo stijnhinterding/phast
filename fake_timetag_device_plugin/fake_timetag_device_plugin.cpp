@@ -56,6 +56,8 @@ void fake_timetag_device_plugin::ShowTriggerSettingsUI(QWidget *parent, const st
     settings.pulse_period = this->comm->GetPulsePeriod();
     settings.time_unit = this->comm->TimeUnit();
     settings.sync_divider = this->comm->GetSyncDivider(0);
+    settings.n_emitters = this->comm->GetNumEmitters();
+    settings.sim_speedup_factor = this->comm->GetSimSpeedupFactor();
 
     ui_fake_device_settings ui(parent, settings, false);
 
@@ -64,6 +66,8 @@ void fake_timetag_device_plugin::ShowTriggerSettingsUI(QWidget *parent, const st
     this->comm->SetDetectionProbability(ui.Settings().detection_probability);
     this->comm->SetPulsePeriod(ui.Settings().pulse_period);
     this->comm->SetSyncDivider(ui.Settings().sync_divider);
+    this->comm->SetNumEmitters(ui.Settings().n_emitters);
+    this->comm->SetSimSpeedupFactor(ui.Settings().sim_speedup_factor);
 }
 
 void fake_timetag_device_plugin::ShowInitDialog(QWidget* parent)
@@ -82,7 +86,8 @@ void fake_timetag_device_plugin::ShowInitDialog(QWidget* parent)
     settings.pulse_period = 1e-6;
     settings.time_unit = 1e-12;
     settings.sync_divider = 128;
-
+    settings.n_emitters = 1;
+    settings.sim_speedup_factor = 1.0;
     ui_fake_device_settings ui(parent, settings);
 
     ui.exec();
@@ -95,5 +100,7 @@ void fake_timetag_device_plugin::ShowInitDialog(QWidget* parent)
                                       ui.Settings().detection_probability,
                                       ui.Settings().sync_divider,
                                       ui.Settings().chan1_delay,
-                                      ui.Settings().chan2_delay);
+                                      ui.Settings().chan2_delay,
+                                      ui.Settings().n_emitters,
+                                      ui.Settings().sim_speedup_factor);
 }

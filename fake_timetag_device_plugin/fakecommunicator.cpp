@@ -20,7 +20,7 @@ FakeCommunicator::~FakeCommunicator()
 }
 
 FakeCommunicator::FakeCommunicator(double timeunit_seconds, double decayrate_inv_seconds, double pulse_period_seconds, double detection_probability, uint64_t sync_divider,
-                                   int64_t chan1_induced_delay, int64_t chan2_induced_delay) :
+                                   int64_t chan1_induced_delay, int64_t chan2_induced_delay, int64_t n_emitters, double sim_speedup_factor) :
     r(nullptr),
     timeunit_seconds(timeunit_seconds),
     decayrate_inv_seconds(decayrate_inv_seconds),
@@ -40,6 +40,8 @@ FakeCommunicator::FakeCommunicator(double timeunit_seconds, double decayrate_inv
     chan0_enabled(true),
     chan1_enabled(true),
     chan2_enabled(true),
+    n_emitters(n_emitters),
+    sim_speedup_factor(sim_speedup_factor),
 #if defined(_WIN32) && !defined(NDEBUG)
     is_running(false)
 #else
@@ -124,10 +126,6 @@ void FakeCommunicator::gen_pulses(std::vector<int64_t>* timestamps, std::vector<
         this->sync_counter++;
 
         double lifetime = 1.0/this->decayrate_inv_seconds;
-        double dt1 = gsl_ran_exponential(this->r, lifetime); // in seconds
-        int64_t dt1_ = (int64_t)round(dt1 / this->timeunit_seconds);
-
-        double p_det = gsl_ran_flat(this->r, 0.0, 1.0);
 
         this->last_largest_time = pulse_t;
         this->last_pulse_time = pulse_t;
@@ -151,38 +149,45 @@ void FakeCommunicator::gen_pulses(std::vector<int64_t>* timestamps, std::vector<
             last_pulse_published = pulse_t;
         }
 
-        if (p_det > det_prob) {
-            continue;
-        }
+        for (int64_t i = 0; i < this->n_emitters; i++) {
+            double p_det = gsl_ran_flat(this->r, 0.0, 1.0);
+            double dt1 = gsl_ran_exponential(this->r, lifetime); // in seconds
+            int64_t dt1_ = (int64_t)round(dt1 / this->timeunit_seconds);
 
-        if (dt1_ > pulse_t + this->pulse_period_timeunits)
-            continue;
-
-        // Randomly decide the detector
-        double detector = gsl_ran_flat(this->r, 0.0, 1.0);
-
-        // Alternate, so we can observe anti-bunching
-        if (detector < 0.5 && this->chan1_enabled) {
-            channel_IDs->push_back(1);
-            timestamps->push_back(pulse_t + dt1_);// + this->chan1_induced_delay);
-
-            if (this->n_events[1] == 0) {
-                this->first_times[1] = pulse_t + dt1_;
+            if (p_det > det_prob) {
+                continue;
             }
 
-            this->n_events[1]++;
-            this->last_times[1] = pulse_t + dt1_;
+            if (dt1_ > pulse_t + this->pulse_period_timeunits)
+                continue; // Just discard 'pile up' photons
 
-        } else if (detector >= 0.5 && this->chan2_enabled) {
-            channel_IDs->push_back(2);
-            timestamps->push_back(pulse_t + dt1_);//  + this->chan2_induced_delay);
+            // Randomly decide the detector
+            double detector = gsl_ran_flat(this->r, 0.0, 1.0);
 
-            if (this->n_events[2] == 0) {
-                this->first_times[2] = pulse_t + dt1_;
+            // TODO: implement detector dead time?
+            // Alternate, so we can observe anti-bunching
+            if (detector < 0.5 && this->chan1_enabled) {
+                channel_IDs->push_back(1);
+                timestamps->push_back(pulse_t + dt1_);// + this->chan1_induced_delay);
+
+                if (this->n_events[1] == 0) {
+                    this->first_times[1] = pulse_t + dt1_;
+                }
+
+                this->n_events[1]++;
+                this->last_times[1] = pulse_t + dt1_;
+
+            } else if (detector >= 0.5 && this->chan2_enabled) {
+                channel_IDs->push_back(2);
+                timestamps->push_back(pulse_t + dt1_);//  + this->chan2_induced_delay);
+
+                if (this->n_events[2] == 0) {
+                    this->first_times[2] = pulse_t + dt1_;
+                }
+
+                this->n_events[2]++;
+                this->last_times[2] = pulse_t + dt1_;
             }
-
-            this->n_events[2]++;
-            this->last_times[2] = pulse_t + dt1_;
         }
     }
 }
@@ -199,6 +204,7 @@ uint64_t FakeCommunicator::ReceiveData(std::vector<int64_t>* timestamps,
 
     auto curr_time = std::chrono::high_resolution_clock::now();
     double dt_seconds = std::chrono::duration<double, std::milli>(curr_time - this->prev_time).count() / 1000.0;
+    dt_seconds *= this->sim_speedup_factor;
     this->prev_time = curr_time;
 
     int64_t dt_timeunits = 0;

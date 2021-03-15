@@ -15,10 +15,12 @@ decaycurve_calc::decaycurve_calc(const std::vector<chan_id>& chans_to_sum,
                                  double bin_low,
                                  double bin_high,
                                  bool display_only_initial_data,
-                                 double time_unit) :
+                                 double time_unit,
+                                 int64_t max_num_histogram_bins) :
     Base_ui_calc(chans_to_sum, bin_width, our_ref, display_only_initial_data, time_unit),
     bin_low(bin_low),
-    bin_high(bin_high)
+    bin_high(bin_high),
+    max_num_histogram_bins(max_num_histogram_bins)
 {
 }
 
@@ -47,11 +49,28 @@ DataView::data_update decaycurve_calc::arrange_update(DetectionUpdate event, boo
     DataView::data_update update;
 
     if (this->xs.size() == 0) {
-        int64_t len = linspace_len(this->bin_low, this->bin_high, 1, 1, 1);
+        int64_t width = 1;
+        int64_t len = linspace_len(this->bin_low, this->bin_high, width, 1, 1);
+
+        // Check that our histogram size is not excessive!
+        if (len > this->max_num_histogram_bins) {
+            len = this->max_num_histogram_bins;
+
+            // Calculate required bin size
+            double tot_width = this->bin_high - this->bin_low;
+            double bin_width = tot_width/((double)len);
+            int64_t bin_width_ = (int64_t)bin_width;
+
+            // Recalc len; may be wrong due to rounding errors
+            int64_t len2 = linspace_len(this->bin_low, this->bin_high, bin_width_, 1, 1);
+            len = len2;
+            width = bin_width_;
+        }
+
         this->xs.resize(len, 0);
         linspace(this->bin_low,
                  this->bin_high,
-                 1,
+                 width,
                  1,
                  1,
                  this->xs.data(),
@@ -79,23 +98,6 @@ DataView::data_update decaycurve_calc::arrange_update(DetectionUpdate event, boo
 
             data_ptr = &*upd.new_micro_start;
             data_len = upd.n_new_micro;
-
-            /*
-            if (ci.micro_display_delaytime == 0) {
-                data_ptr = &*upd.new_micro_start;
-                data_len = upd.n_new_micro;
-            } else {
-                // Apply the delay time
-                temp_data.resize(static_cast<uint64_t>(upd.n_new_micro));
-
-                for (int64_t i = 0; i < upd.n_new_micro; i++) {
-                    temp_data[i] = *(upd.new_micro_start + i) + ci.micro_display_delaytime;
-                }
-
-                data_ptr = temp_data.data();
-                data_len = temp_data.size();
-            }
-            */
 
             int success = bindata_interp_seq(this->xs.data(),
                                            this->xs.size(),

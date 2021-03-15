@@ -19,6 +19,7 @@ private:
     double bin_low;
     double bin_high;
 
+    int64_t max_num_histogram_bins;
 protected:
     virtual chan_data_map get_times_to_save(DetectionUpdate event) const;
 
@@ -33,7 +34,8 @@ public:
                     double bin_low,
                     double bin_high,
                     bool display_only_initial_data,
-                    double time_unit);
+                    double time_unit,
+                    int64_t max_num_histogram_bins=1000000);
 
     virtual void ClearData();
 };
